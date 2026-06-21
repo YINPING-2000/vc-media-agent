@@ -1,0 +1,37 @@
+name: Historical Crawl (one-time)
+
+on:
+  workflow_dispatch:
+    inputs:
+      since:
+        description: "Start date for historical crawl (YYYY-MM-DD)"
+        required: true
+        default: "2026-01-01"
+
+jobs:
+  historical:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install Playwright browsers
+        run: playwright install chromium --with-deps
+
+      - name: Run historical crawl
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          HTTP_PROXY: ${{ secrets.HTTP_PROXY }}
+        run: python main.py --historical --since=${{ github.event.inputs.since }}

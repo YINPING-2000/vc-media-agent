@@ -1,0 +1,173 @@
+sources:
+  # ── 国际 VC 机构博客（RSS，直连）──
+  - name: a16z
+    display_name: "a16z Blog"
+    region: intl
+    type: rss
+    url: "https://a16z.com/feed/"
+    requires_proxy: false
+
+  - name: sequoia
+    display_name: "Sequoia Stories"
+    region: intl
+    type: rss
+    url: "https://www.sequoiacap.com/stories/feed/"
+    requires_proxy: false
+
+  - name: first_round_review
+    display_name: "First Round Review"
+    region: intl
+    type: rss
+    url: "https://review.firstround.com/feed"
+    requires_proxy: false
+
+  - name: benedict_evans
+    display_name: "Benedict Evans"
+    region: intl
+    type: rss
+    url: "https://www.ben-evans.com/benedictevans?format=rss"
+    requires_proxy: false
+
+  # ── 国际科技媒体（RSS，直连）──
+  - name: techcrunch_vc
+    display_name: "TechCrunch VC"
+    region: intl
+    type: rss
+    url: "https://techcrunch.com/tag/venture-capital/feed/"
+    requires_proxy: false
+
+  - name: venturebeat
+    display_name: "VentureBeat"
+    region: intl
+    type: rss
+    url: "https://venturebeat.com/feed/"
+    requires_proxy: false
+
+  - name: crunchbase_news
+    display_name: "Crunchbase News"
+    region: intl
+    type: rss
+    url: "https://news.crunchbase.com/feed/"
+    requires_proxy: false
+
+  # ── 国内媒体（RSS，走代理）──
+  - name: 36kr
+    display_name: "36氪"
+    region: cn
+    type: rss
+    url: "https://36kr.com/feed"
+    requires_proxy: true
+
+  - name: tmtpost
+    display_name: "钛媒体"
+    region: cn
+    type: rss
+    url: "https://tmtpost.com/feed"
+    requires_proxy: true
+
+  - name: cyzone
+    display_name: "创业邦"
+    region: cn
+    type: rss
+    url: "https://cyzone.cn/feed"
+    requires_proxy: true
+
+  - name: geekpark
+    display_name: "极客公园"
+    region: cn
+    type: rss
+    url: "https://geekpark.net/feed"
+    requires_proxy: true
+
+  - name: qbitai
+    display_name: "量子位"
+    region: cn
+    type: rss
+    url: "https://qbitai.com/feed"
+    requires_proxy: true
+
+  - name: jiqizhixin
+    display_name: "机器之心"
+    region: cn
+    type: rss
+    url: "https://jiqizhixin.com/feed"
+    requires_proxy: true
+
+  # ── 国内媒体（Playwright，走代理）──
+  - name: pedaily
+    display_name: "投资界"
+    region: cn
+    type: playwright
+    url: "https://pedaily.cn"
+    requires_proxy: true
+    selectors:
+      article_list: ".articleList .item"
+      title: ".title"
+      link: "a"
+      date: ".time"
+
+  - name: latepost
+    display_name: "晚点 LatePost"
+    region: cn
+    type: playwright
+    url: "https://latepost.com"
+    requires_proxy: true
+    selectors:
+      article_list: ".article-list .article-item"
+      title: "h2"
+      link: "a"
+      date: ".date"
+
+  - name: huxiu
+    display_name: "虎嗅"
+    region: cn
+    type: playwright
+    url: "https://www.huxiu.com/channel/103.html"
+    requires_proxy: true
+    selectors:
+      article_list: ".article-item-box"
+      title: ".title"
+      link: "a.title"
+      date: ".time"
+
+  # ── 微信公众号（RSSHub，走代理）──
+  # biz_id 需要手动获取后填入
+  - name: wechat_monolith
+    display_name: "Monolith 砺思资本"
+    region: cn
+    type: rss
+    url: ""  # https://rsshub.app/wechat/mp/msgbiz/{biz_id}
+    requires_proxy: true
+    enabled: false  # 填入 biz_id 后改为 true
+
+  - name: wechat_5y_capital
+    display_name: "五源资本 5Y Capital"
+    region: cn
+    type: rss
+    url: ""
+    requires_proxy: true
+    enabled: false
+
+  - name: wechat_dark_waves
+    display_name: "暗涌 Waves"
+    region: cn
+    type: rss
+    url: ""
+    requires_proxy: true
+    enabled: false
+
+  - name: wechat_crossing
+    display_name: "十字路口 Crossing"
+    region: cn
+    type: rss
+    url: ""
+    requires_proxy: true
+    enabled: false
+
+  - name: wechat_founder_park
+    display_name: "Founder Park"
+    region: cn
+    type: rss
+    url: ""
+    requires_proxy: true
+    enabled: false

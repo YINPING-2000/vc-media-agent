@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VC 媒体日报</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f5f5f7;
+      color: #1d1d1f;
+      min-height: 100vh;
+    }
+    header {
+      background: #fff;
+      border-bottom: 1px solid #e5e5e5;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    header h1 { font-size: 1.25rem; font-weight: 700; }
+    .controls {
+      display: flex;
+      gap: 8px;
+      margin-left: auto;
+      flex-wrap: wrap;
+    }
+    select, input[type="date"] {
+      padding: 6px 10px;
+      border: 1px solid #d0d0d0;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      background: #fff;
+    }
+    main { max-width: 900px; margin: 24px auto; padding: 0 16px; }
+    .stats {
+      color: #666;
+      font-size: 0.875rem;
+      margin-bottom: 16px;
+    }
+    .article-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 12px;
+      border: 1px solid #e5e5e5;
+      transition: box-shadow 0.15s;
+    }
+    .article-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+    .article-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      font-size: 0.8rem;
+      color: #888;
+    }
+    .tag {
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+    .tag-intl { background: #e8f4fd; color: #0070c9; }
+    .tag-cn   { background: #fff0e6; color: #d05b00; }
+    .article-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+    .article-title a {
+      color: inherit;
+      text-decoration: none;
+    }
+    .article-title a:hover { color: #0070c9; }
+    .article-summary {
+      font-size: 0.9rem;
+      color: #444;
+      line-height: 1.6;
+    }
+    .no-summary { color: #aaa; font-style: italic; font-size: 0.85rem; }
+    #loading { text-align: center; padding: 48px; color: #888; }
+    #error   { text-align: center; padding: 48px; color: #c00; }
+    .pagination {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin: 24px 0;
+    }
+    button {
+      padding: 8px 16px;
+      border: 1px solid #d0d0d0;
+      border-radius: 8px;
+      background: #fff;
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    button:disabled { opacity: 0.4; cursor: default; }
+    button:hover:not(:disabled) { background: #f0f0f0; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>📰 VC 媒体日报</h1>
+    <div class="controls">
+      <select id="regionFilter">
+        <option value="">全部地区</option>
+        <option value="intl">国际</option>
+        <option value="cn">国内</option>
+      </select>
+      <input type="date" id="dateFilter" />
+    </div>
+  </header>
+
+  <main>
+    <p class="stats" id="stats"></p>
+    <div id="feed">
+      <div id="loading">加载中…</div>
+    </div>
+    <div class="pagination">
+      <button id="prevBtn" disabled>← 上一页</button>
+      <span id="pageInfo" style="padding:8px 12px;font-size:.875rem;color:#666"></span>
+      <button id="nextBtn" disabled>下一页 →</button>
+    </div>
+  </main>
+
+  <script>
+    // Inject at deploy time or set via environment — see README
+    const SUPABASE_URL = window.__SUPABASE_URL__ || "";
+    const SUPABASE_ANON_KEY = window.__SUPABASE_ANON_KEY__ || "";
+
+    const PAGE_SIZE = 20;
+    let currentPage = 0;
+    let totalCount = 0;
+
+    const feed = document.getElementById("feed");
+    const stats = document.getElementById("stats");
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    const pageInfo = document.getElementById("pageInfo");
+    const regionFilter = document.getElementById("regionFilter");
+    const dateFilter = document.getElementById("dateFilter");
+
+    regionFilter.addEventListener("change", () => { currentPage = 0; load(); });
+    dateFilter.addEventListener("change",   () => { currentPage = 0; load(); });
+    prevBtn.addEventListener("click", () => { currentPage--; load(); });
+    nextBtn.addEventListener("click", () => { currentPage++; load(); });
+
+    async function load() {
+      if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+        feed.innerHTML = '<div id="error">未配置 Supabase 连接信息，请检查部署环境变量。</div>';
+        return;
+      }
+
+      feed.innerHTML = '<div id="loading">加载中…</div>';
+      prevBtn.disabled = true;
+      nextBtn.disabled = true;
+
+      const region = regionFilter.value;
+      const date   = dateFilter.value;
+
+      let url = `${SUPABASE_URL}/rest/v1/articles?select=*&order=published_at.desc&limit=${PAGE_SIZE}&offset=${currentPage * PAGE_SIZE}`;
+      if (region) url += `&source_region=eq.${region}`;
+      if (date)   url += `&published_at=gte.${date}T00:00:00Z&published_at=lte.${date}T23:59:59Z`;
+
+      try {
+        const res = await fetch(url, {
+          headers: {
+            "apikey": SUPABASE_ANON_KEY,
+            "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+            "Prefer": "count=exact",
+          },
+        });
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        const contentRange = res.headers.get("Content-Range") || "";
+        const match = contentRange.match(/\/(\d+)$/);
+        totalCount = match ? parseInt(match[1]) : 0;
+
+        const articles = await res.json();
+
+        stats.textContent = totalCount > 0
+          ? `共 ${totalCount} 篇文章`
+          : "";
+
+        const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+        pageInfo.textContent = totalPages > 0 ? `第 ${currentPage + 1} / ${totalPages} 页` : "";
+        prevBtn.disabled = currentPage === 0;
+        nextBtn.disabled = (currentPage + 1) * PAGE_SIZE >= totalCount;
+
+        if (articles.length === 0) {
+          feed.innerHTML = '<div style="text-align:center;padding:48px;color:#888">暂无文章</div>';
+          return;
+        }
+
+        feed.innerHTML = articles.map(a => {
+          const tag = a.source_region === "intl"
+            ? '<span class="tag tag-intl">国际</span>'
+            : '<span class="tag tag-cn">国内</span>';
+          const date = a.published_at
+            ? new Date(a.published_at).toLocaleDateString("zh-CN", { year:"numeric", month:"2-digit", day:"2-digit" })
+            : "";
+          const summary = a.summary
+            ? `<p class="article-summary">${escHtml(a.summary)}</p>`
+            : '<p class="no-summary">摘要生成中…</p>';
+
+          return `
+            <div class="article-card">
+              <div class="article-meta">
+                ${tag}
+                <span>${escHtml(a.source_name)}</span>
+                ${date ? `<span>· ${date}</span>` : ""}
+              </div>
+              <div class="article-title">
+                <a href="${escHtml(a.url)}" target="_blank" rel="noopener">${escHtml(a.title)}</a>
+              </div>
+              ${summary}
+            </div>`;
+        }).join("");
+
+      } catch (err) {
+        feed.innerHTML = `<div id="error">加载失败：${escHtml(String(err))}</div>`;
+      }
+    }
+
+    function escHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    load();
+  </script>
+</body>
+</html>
