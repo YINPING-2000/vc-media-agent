@@ -55,7 +55,7 @@ def get_unpushed_articles(client: Client) -> list[dict]:
         client.table("articles")
         .select("*")
         .is_("pushed_at", "null")
-        .is_("summary", "not.null")
+        .not_.is_("summary", "null")
         .order("published_at", desc=True)
         .execute()
     )
