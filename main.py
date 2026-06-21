@@ -92,7 +92,7 @@ def run_crawl(since: datetime | None = None) -> None:
 def run_summarize() -> None:
     """Fetch unsummarized articles and generate Claude summaries."""
     client = get_client()
-    unsummarized = get_unsummarized_articles(client, limit=50)
+    unsummarized = get_unsummarized_articles(client, limit=200)
 
     if not unsummarized:
         logger.info("No unsummarized articles.")

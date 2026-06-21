@@ -68,7 +68,7 @@ def get_unsummarized_articles(client: Client, limit: int = 50) -> list[dict]:
         client.table("articles")
         .select("id, url, title, source_name")
         .is_("summary", "null")
-        .order("scraped_at", desc=True)
+        .order("scraped_at", desc=False)
         .limit(limit)
         .execute()
     )
